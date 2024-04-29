@@ -6,7 +6,7 @@ public class Game extends JFrame {
 
     public static final int WIDTH = 800;
     public static final int HEIGHT = 600;
-    public static final int ENEMY_SPEED = 2; // Velocidad del enemigo
+    public static final int ENEMY_SPEED = 2; 
 
     private GamePanel gamePanel;
 
@@ -16,7 +16,13 @@ public class Game extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setResizable(false);
 
-        gamePanel = new GamePanel(ENEMY_SPEED); // Pasar la velocidad del enemigo al crear GamePanel
+        String username = JOptionPane.showInputDialog(this, "Ingrese su nick:");
+        if (username == null || username.isEmpty()) {
+            username = "Usuario"; 
+        }
+
+        gamePanel = new GamePanel(ENEMY_SPEED); 
+        gamePanel.getPlayer().setUsername(username);
         add(gamePanel);
 
         setVisible(true);
@@ -25,4 +31,5 @@ public class Game extends JFrame {
     public void start() {
         gamePanel.start();
     }
+
 }

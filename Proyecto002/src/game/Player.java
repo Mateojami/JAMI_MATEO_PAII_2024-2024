@@ -1,12 +1,10 @@
 package game;
 
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import javax.swing.Timer;
 
 import interfaces.IShip;
@@ -14,6 +12,7 @@ import interfaces.IShip;
 public class Player implements IShip {
 
     private int x, y;
+    private List<Enemy> enemies;
     private int dx;
     private static final int SPEED = 5;
     private static final int LEFT_BOUNDARY = 0;
@@ -21,13 +20,18 @@ public class Player implements IShip {
     private static final int PROJECTILE_SPEED = 8;
     private List<Ellipse2D.Double> projectiles;
     private Timer timer;
+    private String username; 
+    private int life; 
 
-    public Player(int x, int y) {
+    public Player(int x, int y, List<Enemy> enemies, String username) {
         this.x = x;
         this.y = y;
+        this.enemies = enemies;
+        this.username = username;
         projectiles = new ArrayList<>();
+        life = 10; //Vida del jugador
 
-        timer = new Timer(500, e -> shoot());
+        timer = new Timer(500, e -> shootable());
         timer.start();
     }
 
@@ -46,13 +50,23 @@ public class Player implements IShip {
             Ellipse2D.Double projectile = iterator.next();
             projectile.y -= PROJECTILE_SPEED;
             if (projectile.y < 0) {
-                iterator.remove();
+                iterator.remove(); 
+            } else {
+                Iterator<Enemy> enemyIterator = enemies.iterator();
+                while (enemyIterator.hasNext()) {
+                    Enemy enemy = enemyIterator.next();
+                    if (enemy.isHit(x + 25, (int) projectile.getY() - 50)) {
+                        enemy.die();
+                        iterator.remove(); 
+                    }
+                }
             }
         }
     }
 
+
     @Override
-    public void draw(Graphics g) {
+    public void drawable(Graphics g) {
         g.setColor(Color.WHITE);
         int[] xPoints = {x, x + 25, x + 50};
         int[] yPoints = {y + 50, y, y + 50};
@@ -73,7 +87,8 @@ public class Player implements IShip {
         this.dx = dx;
     }
 
-    private void shoot() {
+    @Override
+    public void shootable() {
         Ellipse2D.Double projectile = new Ellipse2D.Double(x + 22, y - 10, 6, 6);
         projectiles.add(projectile);
     }
@@ -81,5 +96,26 @@ public class Player implements IShip {
     @Override
     public int getY() {
         return y;
+    }
+
+    @Override
+    public void die() {
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public int getLife() {
+        return life;
+    }
+
+    public void decreaseLife() {
+        life--; 
+        
     }
 }

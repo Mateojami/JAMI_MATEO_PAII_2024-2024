@@ -13,22 +13,27 @@ public class GamePanel extends JPanel implements KeyListener {
     private Player player;
     private List<Enemy> enemies;
     private int enemySpeed;
+    private int score; 
+    private int life; 
 
     public GamePanel(int enemySpeed) {
         this.enemySpeed = enemySpeed;
         setPreferredSize(new Dimension(Game.WIDTH, Game.HEIGHT));
 
-        player = new Player(Game.WIDTH / 2 - 25, Game.HEIGHT - Game.HEIGHT / 3);
         enemies = new ArrayList<>();
+        player = new Player(Game.WIDTH / 2 - 25, Game.HEIGHT - Game.HEIGHT / 3, enemies, ""); 
 
-        addKeyListener(this); // Agregar el KeyListener a este panel
+        score = 0; 
+        life = 10; 
+
+        addKeyListener(this); 
         setFocusable(true);
         requestFocus();
     }
 
     public void start() {
         new Thread(() -> {
-            while (true) {
+            while (life >= 0) { 
                 update();
                 repaint();
 
@@ -38,36 +43,40 @@ public class GamePanel extends JPanel implements KeyListener {
                     e.printStackTrace();
                 }
             }
+            gameOver(); 
         }).start();
     }
 
+
+
     private void update() {
         player.update();
-
         Iterator<Enemy> iterator = enemies.iterator();
         while (iterator.hasNext()) {
             Enemy enemy = iterator.next();
             enemy.update();
-            if (enemy.getY() > Game.HEIGHT) {
+            if (!enemy.isAlive()) {
                 iterator.remove();
-                if (player.getY() < Game.HEIGHT * 2 / 3) {
-                    gameOver();
-                    return;
-                }
+                score++; 
             } else if (enemy.getY() > Game.HEIGHT * 2 / 3) {
-                // Si un enemigo cruza la línea, se activa el Game Over
-                gameOver();
-                return;
+                
+                player.decreaseLife();
+                iterator.remove();
             }
         }
 
         if (Math.random() < 0.01) {
             enemies.add(new Enemy((int) (Math.random() * Game.WIDTH), 0, enemySpeed));
         }
+
+        if (player.getLife() <= 0) {
+            gameOver();
+        }
     }
 
+
     private void gameOver() {
-        JOptionPane.showMessageDialog(this, "Game Over", "Game Over", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "Game Over\nScore: " + score, "Game Over", JOptionPane.INFORMATION_MESSAGE);
         System.exit(0);
     }
 
@@ -75,22 +84,43 @@ public class GamePanel extends JPanel implements KeyListener {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+        // Fondo1
         g.setColor(Color.BLACK);
         g.fillRect(0, 0, Game.WIDTH, Game.HEIGHT * 2 / 3);
 
+        // Fondo2
         g.setColor(Color.DARK_GRAY);
         g.fillRect(0, Game.HEIGHT * 2 / 3, Game.WIDTH, Game.HEIGHT / 3);
 
-        player.draw(g);
+        // Jugador
+        player.drawable(g);
 
+        // Enemigos
         for (Enemy enemy : enemies) {
-            enemy.draw(g);
+            enemy.drawable(g);
         }
+
+        // Life
+        g.setColor(Color.WHITE);
+        g.drawString("Life:", 20, 50);
+
+        // Barra vida
+        g.setColor(Color.RED);
+        int barWidth = (int) (((double) player.getLife() / 10) * (Game.WIDTH - 100)); 
+        g.fillRect(60, 40, barWidth, 10); 
+        
+        // Nombre usuario
+        g.setColor(Color.WHITE);
+        g.drawString("Player: " + player.getUsername(), 20, 20);
+
+        // Score
+        g.setColor(Color.WHITE);
+        g.drawString("Score: " + score, Game.WIDTH - 100, 20);
     }
+
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // No se utiliza
     }
 
     @Override
@@ -98,11 +128,11 @@ public class GamePanel extends JPanel implements KeyListener {
         int key = e.getKeyCode();
 
         if (key == KeyEvent.VK_LEFT) {
-            player.updateVelocity(-5); // Mover hacia la izquierda
+            player.updateVelocity(-5); 
         }
 
         if (key == KeyEvent.VK_RIGHT) {
-            player.updateVelocity(5); // Mover hacia la derecha
+            player.updateVelocity(5); 
         }
     }
 
@@ -111,7 +141,15 @@ public class GamePanel extends JPanel implements KeyListener {
         int key = e.getKeyCode();
 
         if (key == KeyEvent.VK_LEFT || key == KeyEvent.VK_RIGHT) {
-            player.updateVelocity(0); // Detener el movimiento cuando se suelta la tecla
+            player.updateVelocity(0); 
         }
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public Player getPlayer() {
+        return player;
     }
 }
